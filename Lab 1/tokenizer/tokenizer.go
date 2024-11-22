@@ -152,6 +152,11 @@ func (p *Tokenizer) Tokenize(expression string) ([]token.Token, []TokenizerError
 				errors = append(errors, TokenizerError{Message: "порожня дужка", StartIdx: idxNow, EndIdx: idxNow})
 			}
 
+			if parantheseCount == 0 {
+				errors = append(errors, TokenizerError{Message: "закриваюча дужка без відкриваючої", StartIdx: idxNow, EndIdx: idxNow})
+				parantheseCount += 1
+			}
+
 			currentTokenStr += string(charNow)
 			idxNow += 1
 			parantheseCount -= 1
@@ -219,31 +224,18 @@ func (p *Tokenizer) Tokenize(expression string) ([]token.Token, []TokenizerError
 	}
 
 	parantheseCount = 0
-	for i := 0; i < len(tokens); i++ {
-		if tokens[i].Type == token.ParanthesesOpenType {
+	for _, t := range tokens {
+		if t.Type == token.ParanthesesOpenType {
 			parantheseCount += 1
-			foundClosed := false
-			localParantheseCount := 1
-			for j := i + 1; j < len(tokens); j++ {
-				if tokens[j].Type == token.ParanthesesOpenType {
-					localParantheseCount += 1
-				} else if tokens[j].Type == token.ParanthesesCloseType {
-					localParantheseCount -= 1
-					if localParantheseCount == 0 {
-						foundClosed = true
-					}
-					break
-				}
-			}
-			if !foundClosed {
-				errors = append(errors, TokenizerError{Message: "не закрита дужка", StartIdx: tokens[i].StartIdx, EndIdx: tokens[i].EndIdx})
-			}
-		} else if tokens[i].Type == token.ParanthesesCloseType {
+		} else if t.Type == token.ParanthesesCloseType {
 			parantheseCount -= 1
-			if parantheseCount < 0 {
-				errors = append(errors, TokenizerError{Message: "зайва дужка", StartIdx: tokens[i].StartIdx, EndIdx: tokens[i].EndIdx})
-			}
 		}
+	}
+
+	if parantheseCount > 0 {
+		errors = append(errors, TokenizerError{Message: "недостатньо закриваючих дужок", StartIdx: len(expression), EndIdx: len(expression)})
+	} else if parantheseCount < 0 {
+		errors = append(errors, TokenizerError{Message: "недостатньо відкриваючих дужок", StartIdx: len(expression), EndIdx: len(expression)})
 	}
 
 	return tokens, errors
