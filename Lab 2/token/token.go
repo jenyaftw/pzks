@@ -51,9 +51,51 @@ func (t Token) String() string {
 	return o + " : " + t.Text
 }
 
-type Operator struct {
-	Precedence int
-	Arguments  int
+func (t Token) GetPrecedence() int {
+	if t.Type != OperatorType && t.Type != UnaryOperatorType {
+		return -1
+	}
+
+	switch t.Text {
+	case "+", "-":
+		return 2
+	case "*", "/":
+		return 3
+	case "^":
+		return 4
+	}
+
+	return -1
+}
+
+func (t Token) IsLeftAssociative() bool {
+	if t.Type != OperatorType && t.Type != UnaryOperatorType {
+		return false
+	}
+
+	switch t.Text {
+	case "+", "-", "*", "/":
+		return true
+	case "^":
+		return false
+	}
+
+	return false
+}
+
+func (t Token) IsRightAssociative() bool {
+	if t.Type != OperatorType && t.Type != UnaryOperatorType {
+		return false
+	}
+
+	switch t.Text {
+	case "+", "-", "*", "/":
+		return false
+	case "^":
+		return true
+	}
+
+	return false
 }
 
 type CharacterChecker struct {

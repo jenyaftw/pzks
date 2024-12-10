@@ -56,10 +56,6 @@ func main() {
 		fmt.Printf("Позиція %d: %s\n", k, errorsByIdx[k])
 	}
 
-	for _, token := range tokens {
-		fmt.Println(token.String())
-	}
-
 	tree := parser.NewParser(tokens).Parse()
 	tree.PostOrder(4)
 }
