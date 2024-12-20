@@ -41,10 +41,6 @@ func main() {
 		}
 	}
 
-	for i := range tokens {
-		fmt.Println(tokens[i].String())
-	}
-
 	errorsByIdx := make(map[int]string)
 
 	for _, e := range tokenizerErrors {

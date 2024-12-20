@@ -14,75 +14,126 @@ func NewDistributiveShortener() DistributiveShortener {
 }
 
 func (d DistributiveShortener) FindExpression(tokens []token.Token) ([]token.Token, []token.Token, *token.Token, int, int) {
-	for i, v := range tokens {
-		if v.Text == "*" || v.Text == "/" {
-			operation := v
+	findLeftRight := func(i int) ([]token.Token, []token.Token, int, int, bool, bool) {
+		var leftTokens []token.Token
+		var rightTokens []token.Token
 
-			var leftTokens []token.Token
-			var rightTokens []token.Token
+		leftIdx := 0
+		rightIdx := len(tokens) - 1
 
-			leftIdx := 0
-			rightIdx := len(tokens) - 1
+		prevIdx := i - 1
+		nextIdx := i + 1
 
-			prevIdx := i - 1
-			nextIdx := i + 1
+		foundLeft := false
+		foundRight := false
 
-			foundLeft := false
-			foundRight := false
+		if len(tokens) > prevIdx {
+			count := 0
+			if tokens[prevIdx].Type == token.ParanthesesCloseType {
+				count += 1
+				foundLeft = true
 
-			if len(tokens) > prevIdx {
-				if tokens[prevIdx].Type == token.ParanthesesCloseType {
-					foundLeft = true
+				for j := prevIdx - 1; j >= 0; j-- {
+					if tokens[j].Type == token.ParanthesesOpenType {
+						count -= 1
 
-					for j := prevIdx - 1; j >= 0; j-- {
-						if tokens[j].Type == token.ParanthesesOpenType {
+						if count == 0 {
 							leftTokens = tokens[j+1 : prevIdx]
 							leftIdx = j
 							break
 						}
+					} else if tokens[j].Type == token.ParanthesesCloseType {
+						count += 1
 					}
-				} else if tokens[prevIdx].Type == token.NumericLiteralType || tokens[prevIdx].Type == token.Symbol {
+				}
+			} else if tokens[prevIdx].Type == token.NumericLiteralType || tokens[prevIdx].Type == token.Symbol {
+				leftTokens = []token.Token{
+					tokens[prevIdx],
+				}
+
+				if prevIdx-1 >= 0 && tokens[prevIdx-1].Type == token.UnaryOperatorType {
 					leftTokens = []token.Token{
+						tokens[prevIdx-1],
 						tokens[prevIdx],
 					}
-
-					if prevIdx-1 >= 0 && tokens[prevIdx-1].Type == token.UnaryOperatorType {
-						leftTokens = []token.Token{
-							tokens[prevIdx-1],
-							tokens[prevIdx],
-						}
-					}
-
-					leftIdx = prevIdx
 				}
+
+				leftIdx = prevIdx
 			}
+		}
 
-			if len(tokens) > nextIdx {
-				if tokens[nextIdx].Type == token.ParanthesesOpenType {
-					foundRight = true
+		if len(tokens) > nextIdx {
+			count := 0
+			if tokens[nextIdx].Type == token.ParanthesesOpenType {
+				count += 1
+				foundRight = true
 
-					for j := nextIdx + 1; j < len(tokens); j++ {
-						if tokens[j].Type == token.ParanthesesCloseType {
+				for j := nextIdx + 1; j < len(tokens); j++ {
+					if tokens[j].Type == token.ParanthesesCloseType {
+						count -= 1
+
+						if count == 0 {
 							rightTokens = tokens[nextIdx+1 : j]
 							rightIdx = j
 							break
 						}
+					} else if tokens[j].Type == token.ParanthesesOpenType {
+						count += 1
 					}
-				} else if tokens[nextIdx].Type == token.NumericLiteralType || tokens[nextIdx].Type == token.Symbol {
-					rightTokens = []token.Token{
-						tokens[nextIdx],
-					}
-
-					rightIdx = nextIdx
 				}
+			} else if tokens[nextIdx].Type == token.NumericLiteralType || tokens[nextIdx].Type == token.Symbol {
+				rightTokens = []token.Token{
+					tokens[nextIdx],
+				}
+
+				rightIdx = nextIdx
 			}
+		}
+
+		return leftTokens, rightTokens, leftIdx, rightIdx, foundLeft, foundRight
+	}
+
+	lastDivide := -1
+	numDivides := 0
+
+	count := 0
+	for i, v := range tokens {
+		if v.Type == token.ParanthesesOpenType {
+			count += 1
+		} else if v.Type == token.ParanthesesCloseType {
+			count -= 1
+		}
+
+		if v.Text == "*" {
+			operation := v
+
+			leftTokens, rightTokens, leftIdx, rightIdx, foundLeft, foundRight := findLeftRight(i)
 
 			if !foundLeft && !foundRight {
 				continue
 			}
 
 			return leftTokens, rightTokens, &operation, leftIdx, rightIdx
+		} else if v.Text == "/" {
+			lastDivide = i
+			numDivides += 1
+		} else if count == 0 && (v.Text == "+" || v.Text == "-") {
+			if numDivides <= 1 {
+				numDivides = 0
+			} else {
+				break
+			}
 		}
+	}
+
+	if numDivides >= 2 {
+		fmt.Println("numDivides >= 2", lastDivide)
+
+		operation := tokens[lastDivide]
+
+		leftTokens, rightTokens, leftIdx, rightIdx, _, _ := findLeftRight(lastDivide)
+
+		return leftTokens, rightTokens, &operation, leftIdx, rightIdx
 	}
 
 	return nil, nil, nil, 0, 0
@@ -93,15 +144,46 @@ func (d DistributiveShortener) OpenExpression(leftTokens, rightTokens []token.To
 	leftExpr := []token.Token{}
 	rightExpr := []token.Token{}
 
+	if operation.Text == "/" {
+		wrappedLeft := d.WrapInParanthases(leftTokens)
+		wrappedRight := d.WrapInParanthases(rightTokens)
+		result = append(result, wrappedLeft...)
+		result = append(result, token.Token{Type: token.OperatorType, Text: "*"})
+		result = append(result, wrappedRight...)
+		return result
+	}
+
+	var curOperator *token.Token
+
 	addToResult := func() {
 		result = append(result, leftExpr...)
 		result = append(result, operation)
 		result = append(result, rightExpr...)
+
+		fmt.Print("Adding operation | Left: ")
+		for _, v := range leftExpr {
+			fmt.Print(v.Text)
+		}
+		fmt.Print(" | Operation: ")
+		fmt.Print(operation.Text)
+		fmt.Print(" | Right: ")
+		for _, v := range rightExpr {
+			fmt.Print(v.Text)
+		}
+		fmt.Println()
 	}
 
 	for i, v := range leftTokens {
 		doStuff := func() {
+			count := 0
 			for j, k := range rightTokens {
+				if k.Type == token.ParanthesesOpenType {
+					count += 1
+				} else if k.Type == token.ParanthesesCloseType {
+					count -= 1
+				}
+				fmt.Println("Count: ", count)
+
 				if k.Type == token.UnaryOperatorType || (k.Text != "-" && k.Text != "+") {
 					rightExpr = append(rightExpr, k)
 
@@ -110,8 +192,43 @@ func (d DistributiveShortener) OpenExpression(leftTokens, rightTokens []token.To
 						rightExpr = []token.Token{}
 					}
 				} else {
-					addToResult()
-					result = append(result, k)
+					if j+1 < len(rightTokens) && (rightTokens[j+1].Text == "*" || rightTokens[j+1].Text == "/") {
+						rightExpr = append(rightExpr, k)
+						continue
+					}
+
+					if count == 0 {
+						addToResult()
+					} else {
+						rightExpr = append(rightExpr, k)
+						continue
+					}
+
+					if curOperator == nil {
+						result = append(result, k)
+					} else if curOperator.Text == "+" && k.Text == "+" {
+						result = append(result, k)
+					} else if curOperator.Text == "+" && k.Text == "-" {
+						result = append(result, token.Token{Type: token.OperatorType, Text: "-"})
+					} else if curOperator.Text == "-" && k.Text == "+" {
+						result = append(result, token.Token{Type: token.OperatorType, Text: "-"})
+					} else if curOperator.Text == "-" && k.Text == "-" {
+						result = append(result, token.Token{Type: token.OperatorType, Text: "+"})
+					} else {
+						fmt.Print("Unexpected operator: ", v.Text, curOperator.Text, k.Text, " | ")
+						fmt.Print("Left: ")
+						for _, v := range leftTokens {
+							fmt.Print(v.Text)
+						}
+						fmt.Print(" | Right: ")
+						for _, v := range rightTokens {
+							fmt.Print(v.Text)
+						}
+						fmt.Println()
+
+						result = append(result, k)
+					}
+
 					rightExpr = []token.Token{}
 				}
 			}
@@ -120,8 +237,13 @@ func (d DistributiveShortener) OpenExpression(leftTokens, rightTokens []token.To
 		}
 
 		if v.Type == token.UnaryOperatorType || (v.Text != "-" && v.Text != "+") {
-			fmt.Println(v.String())
 			leftExpr = append(leftExpr, v)
+
+			if i-1 >= 0 && leftTokens[i-1].Type == token.OperatorType {
+				if leftTokens[i-1].Text == "+" || leftTokens[i-1].Text == "-" {
+					curOperator = &leftTokens[i-1]
+				}
+			}
 
 			if i+1 >= len(leftTokens) {
 				doStuff()
@@ -157,15 +279,20 @@ func (d DistributiveShortener) Shorten(tokens []token.Token) []token.Token {
 		return simplifier.Simplify(tokens)
 	}
 
-	for i := 0; i < len(leftTokens); i++ {
-		print(leftTokens[i].Text)
+	fmt.Print("Left: ")
+	for _, v := range leftTokens {
+		fmt.Print(v.Text)
 	}
-	println()
+	fmt.Print(" | Right: ")
+	for _, v := range rightTokens {
+		fmt.Print(v.Text)
+	}
+	fmt.Println()
 
-	for i := 0; i < len(rightTokens); i++ {
-		print(rightTokens[i].Text)
+	fmt.Println("Tokens:")
+	for i, v := range rightTokens {
+		fmt.Println(i, v.String())
 	}
-	println()
 
 	opened := d.OpenExpression(leftTokens, rightTokens, *operation)
 	simplified := simplifier.Simplify(opened)
@@ -176,5 +303,15 @@ func (d DistributiveShortener) Shorten(tokens []token.Token) []token.Token {
 	newTokens = append(newTokens, wrapped...)
 	newTokens = append(newTokens, tokens[rightIdx+1:]...)
 
-	return simplifier.Simplify(d.Shorten(newTokens))
+	fmt.Print("Simplified: ")
+	for _, v := range newTokens {
+		fmt.Print(v.Text)
+	}
+	fmt.Println()
+
+	fmt.Println()
+	fmt.Println()
+
+	final := simplifier.Simplify(d.Shorten(newTokens))
+	return final
 }
