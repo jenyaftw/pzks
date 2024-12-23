@@ -1,6 +1,8 @@
 package simplifier
 
 import (
+	"fmt"
+
 	"github.com/jenyaftw/lab1/token"
 )
 
@@ -37,47 +39,89 @@ func (s Simplifier) Simplify(tokens []token.Token) []token.Token {
 }
 
 func (s Simplifier) OpenParanthases(tokens []token.Token) []token.Token {
-	// ((a + b)) -> (a + b)
-	// 1 + (a + b) + 2 -> 1 + a + b + 2
+	// newTokens := []token.Token{}
+
+	removeOpen := -1
+	removeClose := -1
+
+	for i, v := range tokens {
+		if v.Text == "(" {
+			if i-1 < 0 || i-1 >= 0 && (tokens[i-1].Text == "+" || tokens[i-1].Text == "-" || tokens[i-1].Text == "(") {
+				count := 1
+
+				for j := i + 1; j < len(tokens); j++ {
+					if tokens[j].Text == "(" {
+						count++
+					}
+
+					if tokens[j].Text == ")" {
+						count--
+					}
+
+					if count == 0 {
+						if j+1 >= len(tokens) || j+1 < len(tokens) && (tokens[j+1].Text == "+" || tokens[j+1].Text == "-" || tokens[j+1].Text == ")") {
+							removeOpen = i
+							removeClose = j
+						}
+						break
+					}
+				}
+			}
+
+			if removeOpen != -1 {
+				break
+			}
+		}
+	}
+
+	if removeOpen == -1 || removeClose == -1 {
+		return tokens
+	}
+
+	fmt.Println(removeOpen, removeClose, tokens[removeOpen].Text, tokens[removeClose].Text)
 
 	newTokens := []token.Token{}
 
-	// leftIdx := -1
-	// rightIdx := -1
-	// count := 0
+	negative := false
 
-	for _, v := range tokens {
-		newTokens = append(newTokens, v)
-
-		// if v.Type == token.ParanthesesOpenType {
-		// 	if leftIdx == -1 {
-		// 		leftIdx = len(newTokens) - 1
-		// 	}
-
-		// 	count += 1
-		// } else if v.Type == token.ParanthesesCloseType {
-		// 	count -= 1
-
-		// 	if count == 0 {
-		// 		if rightIdx == -1 {
-		// 			rightIdx = len(newTokens) - 1
-		// 		}
-		// 	}
-		// }
+	if removeOpen-1 >= 0 && tokens[removeOpen-1].Text == "-" {
+		negative = true
 	}
 
-	// if leftIdx != -1 && rightIdx != -1 {
-	// 	if leftIdx-1 < 0 || leftIdx-1 >= 0 && (newTokens[leftIdx-1].Text == "+" || newTokens[leftIdx-1].Text == "-") {
-	// 		if rightIdx+1 >= len(newTokens) || rightIdx+1 < len(newTokens) && (newTokens[rightIdx+1].Text == "+" || newTokens[rightIdx+1].Text == "-") {
-	// 			left := newTokens[:leftIdx]
-	// 			right := newTokens[rightIdx+1:]
+	fmt.Println(negative)
 
-	// 			inner := newTokens[leftIdx+1 : rightIdx]
+	count := 0
+	neededCount := -1
+	switchSign := false
+	for i, v := range tokens {
+		if v.Text == "(" {
+			count++
+			fmt.Println("REACHED", i, tokens[i], tokens[i-1], tokens[i+1], tokens[i-2])
+		} else if v.Text == ")" {
+			count--
+		}
 
-	// 			newTokens = append(append(left, inner...), right...)
-	// 		}
-	// 	}
-	// }
+		if count == neededCount && switchSign {
+			if v.Text == "+" {
+				v.Text = "-"
+			} else if v.Text == "-" {
+				v.Text = "+"
+			}
+		}
 
-	return newTokens
+		if i == removeOpen {
+			if negative {
+				switchSign = true
+				neededCount = count
+			}
+			continue
+		} else if i == removeClose {
+			switchSign = false
+			continue
+		}
+
+		newTokens = append(newTokens, v)
+	}
+
+	return s.OpenParanthases(newTokens)
 }
