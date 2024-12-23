@@ -159,18 +159,6 @@ func (d DistributiveShortener) OpenExpression(leftTokens, rightTokens []token.To
 		result = append(result, leftExpr...)
 		result = append(result, operation)
 		result = append(result, rightExpr...)
-
-		fmt.Print("Adding operation | Left: ")
-		for _, v := range leftExpr {
-			fmt.Print(v.Text)
-		}
-		fmt.Print(" | Operation: ")
-		fmt.Print(operation.Text)
-		fmt.Print(" | Right: ")
-		for _, v := range rightExpr {
-			fmt.Print(v.Text)
-		}
-		fmt.Println()
 	}
 
 	for i, v := range leftTokens {
@@ -182,7 +170,6 @@ func (d DistributiveShortener) OpenExpression(leftTokens, rightTokens []token.To
 				} else if k.Type == token.ParanthesesCloseType {
 					count -= 1
 				}
-				fmt.Println("Count: ", count)
 
 				if k.Type == token.UnaryOperatorType || (k.Text != "-" && k.Text != "+") {
 					rightExpr = append(rightExpr, k)
@@ -279,21 +266,6 @@ func (d DistributiveShortener) Shorten(tokens []token.Token) []token.Token {
 		return simplifier.Simplify(tokens)
 	}
 
-	fmt.Print("Left: ")
-	for _, v := range leftTokens {
-		fmt.Print(v.Text)
-	}
-	fmt.Print(" | Right: ")
-	for _, v := range rightTokens {
-		fmt.Print(v.Text)
-	}
-	fmt.Println()
-
-	fmt.Println("Tokens:")
-	for i, v := range rightTokens {
-		fmt.Println(i, v.String())
-	}
-
 	opened := d.OpenExpression(leftTokens, rightTokens, *operation)
 	simplified := simplifier.Simplify(opened)
 	wrapped := d.WrapInParanthases(simplified)
@@ -302,15 +274,6 @@ func (d DistributiveShortener) Shorten(tokens []token.Token) []token.Token {
 	newTokens = append(newTokens, tokens[0:leftIdx]...)
 	newTokens = append(newTokens, wrapped...)
 	newTokens = append(newTokens, tokens[rightIdx+1:]...)
-
-	fmt.Print("Simplified: ")
-	for _, v := range newTokens {
-		fmt.Print(v.Text)
-	}
-	fmt.Println()
-
-	fmt.Println()
-	fmt.Println()
 
 	final := simplifier.Simplify(d.Shorten(newTokens))
 	return final

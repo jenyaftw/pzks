@@ -63,6 +63,7 @@ func main() {
 	dist := props.NewDistributiveShortener()
 	shortened := dist.Shorten(tokens)
 
+	fmt.Print("Expanded after distributive property: ")
 	for i := 0; i < len(shortened); i++ {
 		print(shortened[i].Text)
 	}

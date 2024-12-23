@@ -1,8 +1,6 @@
 package simplifier
 
 import (
-	"fmt"
-
 	"github.com/jenyaftw/lab1/token"
 )
 
@@ -78,17 +76,12 @@ func (s Simplifier) OpenParanthases(tokens []token.Token) []token.Token {
 		return tokens
 	}
 
-	fmt.Println(removeOpen, removeClose, tokens[removeOpen].Text, tokens[removeClose].Text)
-
 	newTokens := []token.Token{}
-
 	negative := false
 
 	if removeOpen-1 >= 0 && tokens[removeOpen-1].Text == "-" {
 		negative = true
 	}
-
-	fmt.Println(negative)
 
 	count := 0
 	neededCount := -1
@@ -96,7 +89,6 @@ func (s Simplifier) OpenParanthases(tokens []token.Token) []token.Token {
 	for i, v := range tokens {
 		if v.Text == "(" {
 			count++
-			fmt.Println("REACHED", i, tokens[i], tokens[i-1], tokens[i+1], tokens[i-2])
 		} else if v.Text == ")" {
 			count--
 		}
