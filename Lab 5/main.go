@@ -86,6 +86,8 @@ func main() {
 	fmt.Println(divider)
 	fmt.Println()
 
+	return
+
 	tokensDistClone := make([]token.Token, len(tokens))
 	copy(tokensDistClone, tokens)
 
@@ -122,6 +124,7 @@ func main() {
 			print(all[i][j].Text)
 		}
 		fmt.Println()
+		tree := parser.NewParser(all[i]).Parse()
 		chart, operators, parts := ev.GenerateGanttChart(*tree)
 		chart.PrintStats(operators, parts)
 		fmt.Println()
@@ -145,10 +148,11 @@ func main() {
 			print(perms[i][j].Text)
 		}
 		fmt.Println()
+		tree := parser.NewParser(perms[i]).Parse()
 		chart, operators, parts := ev.GenerateGanttChart(*tree)
 		chart.PrintStats(operators, parts)
+		fmt.Println()
 	}
-	fmt.Println()
 	fmt.Println(divider)
 	fmt.Println()
 

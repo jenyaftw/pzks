@@ -126,17 +126,23 @@ func (c *GanttChart) AddOperation(op int, operators []*parser.TreeNode) {
 
 func (c *GanttChart) PrependZeros(operators []*parser.TreeNode) {
 	opIdx := 0
+	biggestAmt := 0
 	prependAmt := getOperationTime(c.Operators[opIdx], operators)
 	for i := 1; i < NUM_LAYERS; i++ {
 		for j := 0; j < prependAmt; j++ {
 			c.S[i] = append([]int{0}, c.S[i]...)
 		}
 
-		prependAmt += getOperationTime(c.Operators[opIdx], operators)
-
-		if opIdx+1 >= len(c.Operators) {
-			opIdx = len(c.Operators) - 1
+		if opIdx+1 < len(c.Operators) {
+			opIdx += 1
 		}
+
+		time := getOperationTime(c.Operators[opIdx], operators)
+		if time > biggestAmt {
+			biggestAmt = time
+		}
+
+		prependAmt += time
 	}
 }
 
