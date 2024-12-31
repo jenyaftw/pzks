@@ -127,8 +127,6 @@ func (d DistributiveShortener) FindExpression(tokens []token.Token) ([]token.Tok
 	}
 
 	if numDivides >= 2 {
-		fmt.Println("numDivides >= 2", lastDivide)
-
 		operation := tokens[lastDivide]
 
 		leftTokens, rightTokens, leftIdx, rightIdx, _, _ := findLeftRight(lastDivide)
@@ -258,12 +256,14 @@ func (d DistributiveShortener) WrapInParanthases(tokens []token.Token) []token.T
 	return append(newTokens, token.Token{Type: token.ParanthesesCloseType, Text: ")"})
 }
 
-func (d DistributiveShortener) Shorten(tokens []token.Token) []token.Token {
+var allVariants [][]token.Token
+
+func (d DistributiveShortener) Shorten(tokens []token.Token) ([]token.Token, [][]token.Token) {
 	leftTokens, rightTokens, operation, leftIdx, rightIdx := d.FindExpression(tokens)
 	simplifier := simplifier.NewSimplifier()
 
 	if len(leftTokens) == 0 && len(rightTokens) == 0 {
-		return simplifier.Simplify(tokens)
+		return simplifier.Simplify(tokens), allVariants
 	}
 
 	opened := d.OpenExpression(leftTokens, rightTokens, *operation)
@@ -275,6 +275,8 @@ func (d DistributiveShortener) Shorten(tokens []token.Token) []token.Token {
 	newTokens = append(newTokens, wrapped...)
 	newTokens = append(newTokens, tokens[rightIdx+1:]...)
 
-	final := simplifier.Simplify(d.Shorten(newTokens))
-	return final
+	allVariants = append(allVariants, simplifier.Simplify(newTokens))
+	shortened, _ := d.Shorten(newTokens)
+	final := simplifier.Simplify(shortened)
+	return final, allVariants
 }

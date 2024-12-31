@@ -1,8 +1,6 @@
 package props
 
 import (
-	"fmt"
-
 	"github.com/jenyaftw/lab1/simplifier"
 	"github.com/jenyaftw/lab1/token"
 	"github.com/jenyaftw/lab1/tokenizer"
@@ -45,10 +43,6 @@ func (c CommutativeSimplifier) Commutate(tokens []token.Token) [][]token.Token {
 
 	simplifier := simplifier.NewSimplifier()
 	matches := simplifier.SplitBySigns(str)
-	fmt.Println("Matches:", len(matches))
-	for _, match := range matches {
-		fmt.Println(match)
-	}
 
 	perms := c.Permutate(matches, 0)
 	newPerms := [][]token.Token{}

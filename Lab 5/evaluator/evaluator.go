@@ -51,8 +51,8 @@ func (c GanttChart) PadWithZeroes() {
 }
 
 func (c GanttChart) Print(operators []*parser.TreeNode) {
-	fmt.Println("|    #T    |    S1    |    S2    |    S3    |    S4    |    S5    |    S6    |")
-	fmt.Println("|----------|----------|----------|----------|----------|----------|----------|")
+	fmt.Println("|    T    |    S1    |    S2    |    S3    |    S4    |    S5    |    S6    |")
+	fmt.Println("|---------|----------|----------|----------|----------|----------|----------|")
 	for i := 0; i < len(c.S[len(c.S)-1]); i++ {
 		fmt.Print("|")
 		if i < 9 {
@@ -64,9 +64,11 @@ func (c GanttChart) Print(operators []*parser.TreeNode) {
 			if i < len(c.S[j]) && operators[c.S[j][i]].Token.Type == token.OperatorType {
 				// If the operator is single digit we need to add a space to make it look better
 				if operators[c.S[j][i]].Id < 10 {
+					fmt.Print("  ")
+				} else if operators[c.S[j][i]].Id < 100 {
 					fmt.Print(" ")
 				}
-				fmt.Printf("  %d(%s)   |", operators[c.S[j][i]].Id, operators[c.S[j][i]].Token.Text)
+				fmt.Printf(" %d(%s)   |", operators[c.S[j][i]].Id, operators[c.S[j][i]].Token.Text)
 			} else {
 				fmt.Print("          |")
 			}

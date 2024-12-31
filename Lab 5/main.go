@@ -8,7 +8,9 @@ import (
 
 	"github.com/jenyaftw/lab1/evaluator"
 	"github.com/jenyaftw/lab1/parser"
+	"github.com/jenyaftw/lab1/props"
 	"github.com/jenyaftw/lab1/simplifier"
+	"github.com/jenyaftw/lab1/token"
 	"github.com/jenyaftw/lab1/tokenizer"
 )
 
@@ -60,23 +62,97 @@ func main() {
 		fmt.Printf("Позиція %d: %s\n", k, errorsByIdx[k])
 	}
 
+	divider := ""
+	dividerLength := 75
+	for i := 0; i < dividerLength; i++ {
+		divider += "-"
+	}
+
 	tree := parser.NewParser(tokens).Parse()
 	fmt.Println("Generated tree with height: ", tree.GetHeight(), " and width: ", tree.GetWidth())
 	tree.PostOrder(4)
 
 	fmt.Println()
-	fmt.Println("Generated Gantt chart:")
-	evaluator := evaluator.NewEvaluator()
-	chart, operators, parts := evaluator.GenerateGanttChart(*tree)
+	fmt.Println(divider)
+	fmt.Println()
+	fmt.Println("Running base variant")
+	fmt.Println()
+	ev := evaluator.NewEvaluator()
+	chart, operators, parts := ev.GenerateGanttChart(*tree)
 	chart.Print(operators)
+	fmt.Println()
 	chart.PrintStats(operators, parts)
+	fmt.Println()
+	fmt.Println(divider)
+	fmt.Println()
 
-	// Test expression:  ((a/c)+(b*c))*((a/c)+(b*c))
+	tokensDistClone := make([]token.Token, len(tokens))
+	copy(tokensDistClone, tokens)
 
-	// ganttChart.Print()
+	tokensAssociativeClone := make([]token.Token, len(tokens))
+	copy(tokensAssociativeClone, tokens)
 
-	// dist := props.NewDistributiveShortener()
-	// shortened := dist.Shorten(tokens)
+	dist := props.NewDistributiveShortener()
+	shortened, all := dist.Shorten(tokensDistClone)
+
+	fmt.Print("Shortened with distributive property: ")
+	for i := 0; i < len(shortened); i++ {
+		print(shortened[i].Text)
+	}
+	fmt.Println()
+
+	fmt.Println("Generated " + fmt.Sprint(len(all)) + " distributive property variants")
+	for i := 0; i < len(all); i++ {
+		fmt.Print("Variant ", i+1, ": ")
+		for j := 0; j < len(all[i]); j++ {
+			print(all[i][j].Text)
+		}
+		fmt.Println()
+	}
+
+	fmt.Println()
+	fmt.Println(divider)
+	fmt.Println()
+	fmt.Println("Running distributive variants")
+	fmt.Println()
+
+	for i := 0; i < len(all); i++ {
+		fmt.Print("Variant: ")
+		for j := 0; j < len(all[i]); j++ {
+			print(all[i][j].Text)
+		}
+		fmt.Println()
+		chart, operators, parts := ev.GenerateGanttChart(*tree)
+		chart.PrintStats(operators, parts)
+		fmt.Println()
+	}
+	fmt.Println(divider)
+	fmt.Println()
+
+	comm := props.NewCommutativeSimplifier()
+	perms := comm.Commutate(tokensAssociativeClone)
+
+	fmt.Println("Generated " + fmt.Sprint(len(perms)) + " associative property variants")
+
+	fmt.Println()
+	fmt.Println(divider)
+	fmt.Println()
+	fmt.Println("Running associative variants")
+	fmt.Println()
+	for i := 0; i < len(perms); i++ {
+		fmt.Print("Variant: ")
+		for j := 0; j < len(perms[i]); j++ {
+			print(perms[i][j].Text)
+		}
+		fmt.Println()
+		chart, operators, parts := ev.GenerateGanttChart(*tree)
+		chart.PrintStats(operators, parts)
+	}
+	fmt.Println()
+	fmt.Println(divider)
+	fmt.Println()
+
+	// Print variants, all should have unique height AND width, so make a map to keep track of already found widths and heights
 
 	// fmt.Print("Expanded after distributive property: ")
 	// for i := 0; i < len(shortened); i++ {
