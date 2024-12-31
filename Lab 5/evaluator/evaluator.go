@@ -142,7 +142,7 @@ func (c *GanttChart) PrependZeros(operators []*parser.TreeNode) {
 			biggestAmt = time
 		}
 
-		prependAmt += time
+		prependAmt += biggestAmt
 	}
 }
 

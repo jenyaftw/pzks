@@ -80,19 +80,16 @@ func main() {
 	ev := evaluator.NewEvaluator()
 	chart, operators, parts := ev.GenerateGanttChart(*tree)
 	chart.Print(operators)
-	fmt.Println()
 	chart.PrintStats(operators, parts)
 	fmt.Println()
 	fmt.Println(divider)
 	fmt.Println()
 
-	return
-
 	tokensDistClone := make([]token.Token, len(tokens))
 	copy(tokensDistClone, tokens)
 
-	tokensAssociativeClone := make([]token.Token, len(tokens))
-	copy(tokensAssociativeClone, tokens)
+	tokensCommutativeClone := make([]token.Token, len(tokens))
+	copy(tokensCommutativeClone, tokens)
 
 	dist := props.NewDistributiveShortener()
 	shortened, all := dist.Shorten(tokensDistClone)
@@ -112,104 +109,62 @@ func main() {
 		fmt.Println()
 	}
 
-	fmt.Println()
-	fmt.Println(divider)
-	fmt.Println()
-	fmt.Println("Running distributive variants")
-	fmt.Println()
+	// fmt.Println()
+	// fmt.Println(divider)
+	// fmt.Println()
+	// fmt.Println("Running distributive variants")
+	// fmt.Println()
 
-	for i := 0; i < len(all); i++ {
-		fmt.Print("Variant: ")
-		for j := 0; j < len(all[i]); j++ {
-			print(all[i][j].Text)
-		}
-		fmt.Println()
-		tree := parser.NewParser(all[i]).Parse()
-		chart, operators, parts := ev.GenerateGanttChart(*tree)
-		chart.PrintStats(operators, parts)
-		fmt.Println()
-	}
-	fmt.Println(divider)
-	fmt.Println()
+	// for i := 0; i < len(all); i++ {
+	// 	fmt.Print("Variant: ")
+	// 	for j := 0; j < len(all[i]); j++ {
+	// 		print(all[i][j].Text)
+	// 	}
+	// 	fmt.Println()
+	// 	tree := parser.NewParser(all[i]).Parse()
+	// 	chart, operators, parts := ev.GenerateGanttChart(*tree)
+	// 	chart.PrintStats(operators, parts)
+	// 	fmt.Println()
+	// }
+	// fmt.Println(divider)
+	// fmt.Println()
 
 	comm := props.NewCommutativeSimplifier()
-	perms := comm.Commutate(tokensAssociativeClone)
+	perms := comm.Commutate(tokensCommutativeClone)
 
-	fmt.Println("Generated " + fmt.Sprint(len(perms)) + " associative property variants")
+	fmt.Println("Generated " + fmt.Sprint(len(perms)) + " commutative property variants")
+	for k, v := range perms {
+		tree := parser.NewParser(v).Parse()
+		height := tree.GetHeight()
+		width := tree.GetWidth()
 
-	fmt.Println()
-	fmt.Println(divider)
-	fmt.Println()
-	fmt.Println("Running associative variants")
-	fmt.Println()
-	for i := 0; i < len(perms); i++ {
-		fmt.Print("Variant: ")
-		for j := 0; j < len(perms[i]); j++ {
-			print(perms[i][j].Text)
+		fmt.Print("Variant ", k+1, ": ")
+		for j := 0; j < len(v); j++ {
+			print(v[j].Text)
 		}
-		fmt.Println()
-		tree := parser.NewParser(perms[i]).Parse()
-		chart, operators, parts := ev.GenerateGanttChart(*tree)
-		chart.PrintStats(operators, parts)
+		fmt.Print(" | Height: ")
+		fmt.Print(height)
+		fmt.Print(" | Width: ")
+		fmt.Print(width)
 		fmt.Println()
 	}
-	fmt.Println(divider)
-	fmt.Println()
 
-	// Print variants, all should have unique height AND width, so make a map to keep track of already found widths and heights
-
-	// fmt.Print("Expanded after distributive property: ")
-	// for i := 0; i < len(shortened); i++ {
-	// 	print(shortened[i].Text)
-	// }
-	// println()
-
-	// comm := props.NewCommutativeSimplifier()
-	// perms := comm.Commutate(tokens)
-
-	// fmt.Println("Generated " + fmt.Sprint(len(perms)) + " permutations")
-
-	// type Perm struct {
-	// 	perm   []token.Token
-	// 	width  int
-	// 	height int
-	// }
-
-	// var permsWithProps []Perm
-	// for _, perm := range perms {
-	// 	tree := parser.NewParser(perm).Parse()
-	// 	height := tree.GetHeight()
-	// 	width := tree.GetWidth()
-	// 	permsWithProps = append(permsWithProps, Perm{perm: perm, width: width, height: height})
-	// }
-
-	// sort.Slice(permsWithProps, func(i, j int) bool {
-	// 	if permsWithProps[i].height == permsWithProps[j].height {
-	// 		return permsWithProps[i].width < permsWithProps[j].width
+	// fmt.Println()
+	// fmt.Println(divider)
+	// fmt.Println()
+	// fmt.Println("Running associative variants")
+	// fmt.Println()
+	// for i := 0; i < len(perms); i++ {
+	// 	fmt.Print("Variant: ")
+	// 	for j := 0; j < len(perms[i]); j++ {
+	// 		print(perms[i][j].Text)
 	// 	}
-	// 	return permsWithProps[i].height < permsWithProps[j].height
-	// })
-
-	// // Print top 10 permutations with different height and width
-	// width := 0
-	// height := 0
-	// new := 0
-	// for _, perm := range permsWithProps {
-	// 	if perm.height != height || perm.width != width {
-	// 		width = perm.width
-	// 		height = perm.height
-	// 		new++
-
-	// 		fmt.Print("Height: ", perm.height, " Width: ", perm.width, " | Permutation: ")
-	// 		for _, token := range perm.perm {
-	// 			fmt.Print(token.Text)
-	// 		}
-	// 		fmt.Println()
-	// 	}
-
-	// 	if new > 10 {
-	// 		break
-	// 	}
+	// 	fmt.Println()
+	// 	tree := parser.NewParser(perms[i]).Parse()
+	// 	chart, operators, parts := ev.GenerateGanttChart(*tree)
+	// 	chart.PrintStats(operators, parts)
+	// 	fmt.Println()
 	// }
-
+	// fmt.Println(divider)
+	// fmt.Println()
 }

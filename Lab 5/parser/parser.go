@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/jenyaftw/lab1/simplifier"
 	"github.com/jenyaftw/lab1/token"
 )
 
@@ -167,5 +168,8 @@ func recursivelyParse(tokens []token.Token) *TreeNode {
 }
 
 func (p *Parser) Parse() *TreeNode {
+	simplifier := simplifier.NewSimplifier()
+	p.tokens = simplifier.Simplify(p.tokens)
+
 	return recursivelyParse(p.tokens)
 }
